@@ -35,6 +35,10 @@
 #include <string>
 #include <vector>
 
+#include <tinyxml.h>
+
+#include <hardware_interface/robot_hw.h>
+
 #include <transmission_interface/transmission.h>
 #include <transmission_interface/transmission_interface_exception.h>
 
@@ -117,6 +121,8 @@ namespace transmission_interface
 class FourBarLinkageTransmission : public Transmission
 {
 public:
+  FourBarLinkageTransmission();
+
   /**
    * \param actuator_reduction Reduction ratio of actuators.
    * \param joint_offset       Joint position offset used in the position mappings.
@@ -124,6 +130,14 @@ public:
    */
   FourBarLinkageTransmission(const std::vector<double>& actuator_reduction,
                              const std::vector<double>& joint_offset = std::vector<double>(2, 0.0));
+
+  /**
+   * \brief Initializes the transmission from XML data.
+   * \param[in] config TinyXML element pointer to the transmissions XML data
+   * \param[in] robot Pointer the parent robot hardware interface class which is loading this transmission.
+   * \return    Boolean indicating wether the object was successfully initialized
+   */
+  virtual bool  initXml (TiXmlElement const* config, hardware_interface::RobotHW *robot);
 
   /**
    * \brief Transform \e effort variables from actuator to joint space.
@@ -193,6 +207,12 @@ protected:
   std::vector<double>  jnt_offset_;
 };
 
+inline FourBarLinkageTransmission::FourBarLinkageTransmission()
+  : Transmission()
+{
+
+}
+
 inline FourBarLinkageTransmission::FourBarLinkageTransmission(const std::vector<double>& actuator_reduction,
                                                               const std::vector<double>& joint_offset)
   : Transmission(),
@@ -209,6 +229,11 @@ inline FourBarLinkageTransmission::FourBarLinkageTransmission(const std::vector<
   {
     throw TransmissionInterfaceException("Transmission reduction ratios cannot be zero.");
   }
+}
+
+bool FourBarLinkageTransmission::initXml(TiXmlElement const* config, hardware_interface::RobotHW *robot)
+{
+  return false;
 }
 
 inline void FourBarLinkageTransmission::actuatorToJointEffort(const ActuatorData& act_data,

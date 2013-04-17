@@ -34,6 +34,14 @@
 #include <string>
 #include <vector>
 
+// Forward declarations
+namespace hardware_interface
+{
+  class RobotHW;
+}
+
+class TiXmlElement;
+
 namespace transmission_interface
 {
 
@@ -86,6 +94,14 @@ class Transmission
 {
 public:
   virtual ~Transmission() {}
+
+  /**
+   * \brief Initializes the transmission from XML data.
+   * \param[in] config TinyXML element pointer to the transmissions XML data
+   * \param[in] robot Pointer the parent robot hardware interface class which is loading this transmission.
+   * \return    Boolean indicating wether the object was successfully initialized
+   */
+  virtual bool  initXml (TiXmlElement const* config, hardware_interface::RobotHW *robot) = 0;
 
   /**
    * \brief Transform \e effort variables from actuator to joint space.

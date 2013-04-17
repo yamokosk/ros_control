@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2012, hiDOF, Inc
+// Copyright (C) 2012, hiDOF INC.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,56 +25,26 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef CONRTOLLER_MANAGER_CONTROLLER_LOADER_H
-#define CONRTOLLER_MANAGER_CONTROLLER_LOADER_H
-
-#include <pluginlib/class_loader.h>
-#include <controller_manager/controller_loader_interface.h>
-#include <boost/shared_ptr.hpp>
-
-namespace controller_manager
-{
-
-/** \brief Pluginlib-Based Controller Loader
- *
- * This default controller loader uses pluginlib to load and then instantiate
- * controller libraries.
- *
- * \tparam T The base class of the controller types to be loaded
- *
+/*
+ * Author: Wim Meeussen
  */
 
-template <class T>
-class ControllerLoader : public ControllerLoaderInterface
+#ifndef HARDWARE_INTERFACE_ACTUATOR_STATE_INTERFACE_H
+#define HARDWARE_INTERFACE_ACTUATOR_STATE_INTERFACE_H
+
+#include <hardware_interface/state_interface.h>
+ 
+namespace hardware_interface {
+
+/** \brief Hardware interface to support reading the state of an array of actuators
+ * 
+ * This \ref HardwareInterface supports reading the state of an array of named
+ * actuators, each of which has some position, velocity, and effort (force or
+ * torque).
+ *
+ */
+class ActuatorStateInterface : public StateInterface
 {
-public:
-  ControllerLoader(const std::string& package, const std::string& base_class) :
-    ControllerLoaderInterface(base_class),
-    package_(package),
-    base_class_(base_class)
-  {
-    reload();
-  }
-
-  virtual boost::shared_ptr<controller_interface::ControllerBase> createInstance(const std::string& lookup_name)
-  {
-    return controller_loader_->createInstance(lookup_name);
-  }
-
-  std::vector<std::string> getDeclaredClasses()
-  {
-    return controller_loader_->getDeclaredClasses();
-  }
-
-  void reload()
-  {
-    controller_loader_.reset(new pluginlib::ClassLoader<T>(package_, base_class_) );
-  }
-
-private:
-  std::string package_;
-  std::string base_class_;
-  boost::shared_ptr<pluginlib::ClassLoader<T> > controller_loader_;
 };
 
 }

@@ -12,4 +12,11 @@
     <rosdoc config="rosdoc.yaml" />
   </export>
 
+  <depend package="pluginlib"/>
+  <depend package="hardware_interface" />
+
+  <export>
+    <transmission_interface plugin="${prefix}/transmission_plugins.xml" />
+  </export>
+
 </package>

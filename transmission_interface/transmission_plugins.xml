@@ -1,0 +1,17 @@
+<library path="lib/libtransmission_interface">
+  <class name="transmission_interface/SimpleTransmission" type="transmission_interface::SimpleTransmission" base_class_type="transmission_interface::Transmission">
+    <description>
+      This transmission relates one actuator and one joint through a reductor (or amplifier). Timing belts and gears are examples of this transmission type.
+    </description>
+  </class>
+  <class name="transmission_interface/FourBarLinkageTransmission" type="transmission_interface::FourBarLinkageTransmission" base_class_type="transmission_interface::Transmission">
+    <description>
+      This transmission relates two actuators and two joints through a mechanism in which the state of the first joint only depends on the first actuator, while the second joint depends on both actuators.
+    </description>
+  </class>
+  <class name="transmission_interface/DifferentialTransmission" type="transmission_interface::DifferentialTransmission" base_class_type="transmission_interface::Transmission">
+    <description>
+      This transmission relates two actuators and two joints through a differential mechanism
+    </description>
+  </class>
+</library>

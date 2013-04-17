@@ -34,6 +34,10 @@
 #include <string>
 #include <vector>
 
+#include <tinyxml.h>
+
+#include <hardware_interface/robot_hw.h>
+
 #include <transmission_interface/transmission.h>
 #include <transmission_interface/transmission_interface_exception.h>
 
@@ -95,6 +99,8 @@ namespace transmission_interface
 class SimpleTransmission : public Transmission
 {
 public:
+  SimpleTransmission();
+
   /**
    * \param reduction Reduction ratio.
    * \param joint_offset Joint position offset used in the position mappings.
@@ -102,6 +108,14 @@ public:
    */
   SimpleTransmission(const double reduction,
                      const double joint_offset = 0.0);
+
+  /**
+   * \brief Initializes the transmission from XML data.
+   * \param[in] config TinyXML element pointer to the transmissions XML data
+   * \param[in] robot Pointer the parent robot hardware interface class which is loading this transmission.
+   * \return    Boolean indicating wether the object was successfully initialized
+   */
+  virtual bool  initXml (TiXmlElement const* config, hardware_interface::RobotHW *robot);
 
   /**
    * \brief Transform \e effort variables from actuator to joint space.
@@ -171,6 +185,13 @@ private:
   double jnt_offset_;
 };
 
+inline SimpleTransmission::SimpleTransmission()
+  : Transmission(),
+    reduction_(0.0),
+    jnt_offset_(0.0)
+{
+}
+
 inline SimpleTransmission::SimpleTransmission(const double reduction,
                                               const double joint_offset)
   : Transmission(),
@@ -181,6 +202,41 @@ inline SimpleTransmission::SimpleTransmission(const double reduction,
   {
     throw TransmissionInterfaceException("Transmission reduction ratio cannot be zero.");
   }
+}
+
+bool SimpleTransmission::initXml(TiXmlElement const* config, hardware_interface::RobotHW *robot)
+{
+  const char *name = elt->Attribute("name");
+  name_ = name ? name : "";
+
+  // Load the joint
+  TiXmlElement *jel = elt->FirstChildElement("joint");
+  std::string jointName;
+  if (jel->QueryValueAttribute("name", &transmissionName) != TIXML_SUCCESS)
+  {
+    std::cerr << "SimpleTransmission did not specify joint name" << std::endl;
+    return false;
+  }
+  transmission_interface::JointData jointData = robot->addJoint(jointName)->getData();
+
+  // and actuator
+  TiXmlElement *ael = elt->FirstChildElement("actuator");
+  std::string actuatorData;
+  if (jel->QueryValueAttribute("name", &transmissionName) != TIXML_SUCCESS)
+  {
+    std::cerr << "SimpleTransmission did not specify an actuator name" << std::endl;
+    return false;
+  }
+  transmission_interface::ActuatorData actuatorData = robot->addActuator(actuatorName)->getData();
+
+  // Parameters
+  reduction_ = atof(elt->FirstChildElement("mechanicalReduction")->GetText());
+  jnt_offset_ = atof(elt->FirstChildElement("jointOffset")->GetText());
+
+  // Register with parent class
+  robot->registerTransmission(name, this, actuatorData, jointData);
+
+  return true;
 }
 
 inline void SimpleTransmission::actuatorToJointEffort(const ActuatorData& act_data,

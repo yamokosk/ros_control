@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2012, hiDOF, Inc
+// Copyright (C) 2012, hiDOF INC.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,57 +25,47 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef CONRTOLLER_MANAGER_CONTROLLER_LOADER_H
-#define CONRTOLLER_MANAGER_CONTROLLER_LOADER_H
+#ifndef HARDWARE_INTERFACE_ACTUATOR_COMMAND_INTERFACE_H
+#define HARDWARE_INTERFACE_ACTUATOR_COMMAND_INTERFACE_H
 
-#include <pluginlib/class_loader.h>
-#include <controller_manager/controller_loader_interface.h>
-#include <boost/shared_ptr.hpp>
+#include <hardware_interface/command_interface.h>
 
-namespace controller_manager
+
+namespace hardware_interface
 {
 
-/** \brief Pluginlib-Based Controller Loader
+/** \brief Hardware interface to support commanding an array of actuators
  *
- * This default controller loader uses pluginlib to load and then instantiate
- * controller libraries.
- *
- * \tparam T The base class of the controller types to be loaded
+ * This \ref HardwareInterface supports commanding the output of an array of
+ * named actuators. Note that these commands can have any semantic meaning as long
+ * as they each can be represented by a single double, they are not necessarily
+ * effort commands. To specify a meaning to this command, see the derived
+ * classes like \ref EffortJointInterface etc.
  *
  */
-
-template <class T>
-class ControllerLoader : public ControllerLoaderInterface
+class ActuatorCommandInterface : public CommandInterface
 {
-public:
-  ControllerLoader(const std::string& package, const std::string& base_class) :
-    ControllerLoaderInterface(base_class),
-    package_(package),
-    base_class_(base_class)
-  {
-    reload();
-  }
 
-  virtual boost::shared_ptr<controller_interface::ControllerBase> createInstance(const std::string& lookup_name)
-  {
-    return controller_loader_->createInstance(lookup_name);
-  }
-
-  std::vector<std::string> getDeclaredClasses()
-  {
-    return controller_loader_->getDeclaredClasses();
-  }
-
-  void reload()
-  {
-    controller_loader_.reset(new pluginlib::ClassLoader<T>(package_, base_class_) );
-  }
-
-private:
-  std::string package_;
-  std::string base_class_;
-  boost::shared_ptr<pluginlib::ClassLoader<T> > controller_loader_;
 };
+
+/// \ref ActuatorCommandInterface for commanding effort-based actuators
+class EffortActuatorInterface : public ActuatorCommandInterface
+{
+
+};
+
+/// \ref ActuatorCommandInterface for commanding velocity-based actuators
+class VelocityActuatorInterface : public ActuatorCommandInterface
+{
+
+};
+
+/// \ref ActuatorCommandInterface for commanding position-based actuators
+class PositionActuatorInterface : public ActuatorCommandInterface
+{
+
+};
+
 
 }
 

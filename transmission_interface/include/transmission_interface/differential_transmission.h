@@ -34,6 +34,10 @@
 #include <string>
 #include <vector>
 
+#include <tinyxml.h>
+
+#include <hardware_interface/robot_hw.h>
+
 #include <transmission_interface/transmission.h>
 #include <transmission_interface/transmission_interface_exception.h>
 
@@ -117,6 +121,8 @@ namespace transmission_interface
 class DifferentialTransmission : public Transmission
 {
 public:
+  DifferentialTransmission();
+
   /**
    * \param actuator_reduction Reduction ratio of actuators.
    * \param joint_reduction    Reduction ratio of joints.
@@ -126,6 +132,14 @@ public:
   DifferentialTransmission(const std::vector<double>& actuator_reduction,
                            const std::vector<double>& joint_reduction,
                            const std::vector<double>& joint_offset = std::vector<double>(2, 0.0));
+
+  /**
+   * \brief Initializes the transmission from XML data.
+   * \param[in] config TinyXML element pointer to the transmissions XML data
+   * \param[in] robot Pointer the parent robot hardware interface class which is loading this transmission.
+   * \return    Boolean indicating wether the object was successfully initialized
+   */
+  virtual bool  initXml (TiXmlElement const* config, hardware_interface::RobotHW *robot);
 
   /**
    * \brief Transform \e effort variables from actuator to joint space.
@@ -196,6 +210,12 @@ protected:
   std::vector<double>  jnt_offset_;
 };
 
+inline DifferentialTransmission::DifferentialTransmission()
+  : Transmission()
+{
+
+}
+
 inline DifferentialTransmission::DifferentialTransmission(const std::vector<double>& actuator_reduction,
                                                           const std::vector<double>& joint_reduction,
                                                           const std::vector<double>& joint_offset)
@@ -219,6 +239,11 @@ inline DifferentialTransmission::DifferentialTransmission(const std::vector<doub
   {
     throw TransmissionInterfaceException("Transmission reduction ratios cannot be zero.");
   }
+}
+
+bool DifferentialTransmission::initXml(TiXmlElement const* config, hardware_interface::RobotHW *robot)
+{
+  return false;
 }
 
 inline void DifferentialTransmission::actuatorToJointEffort(const ActuatorData& act_data,

@@ -1,0 +1,8 @@
+#include <pluginlib/class_list_macros.h>
+#include <transmission_interface/simple_transmission.h>
+#include <transmission_interface/four_bar_linkage_transmission.h>
+#include <transmission_interface/differential_transmission.h>
+
+PLUGINLIB_DECLARE_CLASS(transmission_interface, SimpleTransmission, transmission_interface::SimpleTransmission, transmission_interface::Transmission);
+PLUGINLIB_DECLARE_CLASS(transmission_interface, FourBarLinkageTransmission, transmission_interface::FourBarLinkageTransmission, transmission_interface::Transmission);
+PLUGINLIB_DECLARE_CLASS(transmission_interface, DifferentialTransmission, transmission_interface::DifferentialTransmission, transmission_interface::Transmission);
