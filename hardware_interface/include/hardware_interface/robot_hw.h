@@ -34,6 +34,14 @@
 #include <hardware_interface/controller_info.h>
 #include <ros/ros.h>
 
+// forward declarations to avoid circular dependencies with transmission_interface package
+namespace transmission_interface
+{
+  class Transmission;
+  class ActuatorData;
+  class JointData;
+}
+
 namespace hardware_interface
 {
 
@@ -138,7 +146,11 @@ public:
     }
     return hw;
   }
-
+ 
+  virtual void registerTransmission(std::string const& name, 
+        transmission_interface::Transmission* transmission, 
+        transmission_interface::ActuatorData const& actuatorData, 
+        transmission_interface::JointData const& jointData) = 0;
   /*\}*/
 
 private:

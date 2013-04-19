@@ -32,19 +32,95 @@
 #ifndef HARDWARE_INTERFACE_JOINT_STATE_INTERFACE_H
 #define HARDWARE_INTERFACE_JOINT_STATE_INTERFACE_H
 
-#include <hardware_interface/state_interface.h>
+#include <hardware_interface/hardware_interface.h>
+#include <string>
+#include <map>
+#include <vector>
+#include <utility>  // for std::make_pair
 
-namespace hardware_interface {
+namespace hardware_interface{
 
-/** \brief Hardware interface to support reading the state of an array of actuators
+/// A handle used to read the state of a single joint
+class JointStateHandle
+{
+public:
+  JointStateHandle() {};
+  JointStateHandle(const std::string& name, const double* pos, const double* vel, const double* eff)
+    : name_(name), pos_(pos), vel_(vel), eff_(eff)
+  {}
+
+  std::string getName() const {return name_;}
+  double getPosition() const {return *pos_;}
+  double getVelocity() const {return *vel_;}
+  double getEffort()   const {return *eff_;}
+
+private:
+  std::string name_;
+  const double* pos_;
+  const double* vel_;
+  const double* eff_;
+};
+
+
+/** \brief Hardware interface to support reading the state of an array of joints
  * 
  * This \ref HardwareInterface supports reading the state of an array of named
- * actuators, each of which has some position, velocity, and effort (force or
+ * joints, each of which has some position, velocity, and effort (force or
  * torque).
  *
  */
-class JointStateInterface : public StateInterface
+class JointStateInterface: public HardwareInterface
 {
+public:
+  /// Get the vector of joint names registered to this interface.
+  std::vector<std::string> getJointNames() const
+  {
+    std::vector<std::string> out;
+    out.reserve(handle_map_.size());
+    for( HandleMap::const_iterator it = handle_map_.begin(); it != handle_map_.end(); ++it)
+    {
+      out.push_back(it->first);
+    }
+    return out;
+  }
+
+  /** \brief Register a new joint with this interface.
+   *
+   * \param name The name of the new joint
+   * \param pos A pointer to the storage for this joint's position 
+   * \param vel A pointer to the storage for this joint's velocity
+   * \param eff A pointer to the storage for this joint's effort (force or torque)
+   *
+   */
+  void registerJoint(const std::string& name, double* pos, double* vel, double* eff)
+  {
+    JointStateHandle handle(name, pos, vel, eff);
+    HandleMap::iterator it = handle_map_.find(name);
+    if (it == handle_map_.end())
+      handle_map_.insert(std::make_pair(name, handle));
+    else
+      it->second = handle;
+  }
+
+  /** \brief Get a \ref JointStateHandle for accessing a joint's state
+   *
+   * \param name The name of the joint
+   *
+   */
+  JointStateHandle getJointStateHandle(const std::string& name) const
+  {
+    HandleMap::const_iterator it = handle_map_.find(name);
+
+    if (it == handle_map_.end())
+      throw HardwareInterfaceException("Could not find joint [" + name + "] in JointStateInterface");
+
+    return it->second;
+  }
+
+private:
+  typedef std::map<std::string, JointStateHandle> HandleMap;
+  HandleMap handle_map_;
+
 };
 
 }

@@ -34,12 +34,10 @@
 #include <string>
 #include <vector>
 
-// Forward declarations
-namespace hardware_interface
-{
-  class RobotHW;
-}
+#include <transmission_interface/command_interface.h>
+#include <hardware_interface/robot_hw.h>
 
+// Forward declaration
 class TiXmlElement;
 
 namespace transmission_interface
@@ -174,7 +172,50 @@ public:
 
   /** \return Number of joints managed by transmission, ie. the dimension of the joint space. */
   virtual std::size_t numJoints()    const = 0;
+
+protected:
+  template<class T>
+  bool wrapData(hardware_interface::RobotHW *robot, std::string const& interfaceType, std::string const& resName, T& data);
 };
+
+template<class T>
+bool Transmission::wrapData(hardware_interface::RobotHW *robot, std::string const& interfaceType, std::string const& resName, T& data)
+{
+  transmission_interface::CommandInterface* commandInterface;
+  if (interfaceType == "EffortInterface")
+  {
+    commandInterface = robot->get<transmission_interface::EffortInterface>();
+  }
+  else if (interfaceType == "VelocityInterface")
+  {
+    commandInterface = robot->get<transmission_interface::VelocityInterface>();
+  }
+  else if (interfaceType == "PositionInterface")
+  {
+    commandInterface = robot->get<transmission_interface::PositionInterface>(); 
+  }
+  else
+  {
+    std::cerr << "Invalid hardware interface type '" << interfaceType << "' for resource " << resName << std::endl;
+    return false;
+  }
+
+  transmission_interface::CommandHandle handle;
+  try 
+  {
+    handle = commandInterface->getCommandHandle(resName);
+  } 
+  catch (hardware_interface::HardwareInterfaceException & err)
+  {
+    std::cerr << "Error: " << err.what();
+    return false;
+  }
+
+  data.position.push_back(handle.position);
+  data.velocity.push_back(handle.velocity);
+  data.effort.push_back(handle.effort);
+  return true;
+}
 
 } // transmission_interface
 

@@ -28,11 +28,27 @@
 #ifndef HARDWARE_INTERFACE_JOINT_COMMAND_INTERFACE_H
 #define HARDWARE_INTERFACE_JOINT_COMMAND_INTERFACE_H
 
-#include <hardware_interface/command_interface.h>
+#include <hardware_interface/joint_state_interface.h>
 
 
 namespace hardware_interface
 {
+
+/** \brief A handle used to read and command a single joint
+ */
+class JointHandle : public JointStateHandle
+{
+public:
+  JointHandle() {};
+  JointHandle(const JointStateHandle& js, double* cmd)
+    : JointStateHandle(js), cmd_(cmd)
+  {}
+  void setCommand(double command) {*cmd_ = command;};
+
+private:
+  double* cmd_;
+};
+
 
 /** \brief Hardware interface to support commanding an array of joints
  *
@@ -43,8 +59,61 @@ namespace hardware_interface
  * classes like \ref EffortJointInterface etc.
  *
  */
-class JointCommandInterface : public CommandInterface
+class JointCommandInterface : public hardware_interface::HardwareInterface
 {
+public:
+  /// Get the vector of joint names registered to this interface.
+  std::vector<std::string> getJointNames() const
+  {
+    std::vector<std::string> out;
+    out.reserve(handle_map_.size());
+    for( HandleMap::const_iterator it = handle_map_.begin(); it != handle_map_.end(); ++it)
+    {
+      out.push_back(it->first);
+    }
+    return out;
+  }
+
+  /** \brief Register a new joint with this interface.
+   *
+   * \param name The name of the new joint
+   * \param cmd A pointer to the storage for this joint's output command
+   */
+  void registerJoint(const JointStateHandle& js, double* cmd)
+  {
+    JointHandle handle(js, cmd);
+    HandleMap::iterator it = handle_map_.find(js.getName());
+    if (it == handle_map_.end())
+      handle_map_.insert(std::make_pair(js.getName(), handle));
+    else
+      it->second = handle;
+  }
+
+  /** \brief Get a \ref JointHandle for accessing a joint's state and setting
+   * its output command.
+   *
+   * When a \ref JointHandle is acquired, this interface will claim the joint
+   * as a resource.
+   *
+   * \param name The name of the joint
+   *
+   * \returns A \ref JointHandle corresponding to the joint identified by \c name
+   *
+   */
+  JointHandle getJointHandle(const std::string& name)
+  {
+    HandleMap::const_iterator it = handle_map_.find(name);
+
+    if (it == handle_map_.end())
+      throw HardwareInterfaceException("Could not find joint [" + name + "] in JointCommandInterface");
+
+    HardwareInterface::claim(name);
+    return it->second;
+  }
+
+protected:
+  typedef std::map<std::string, JointHandle> HandleMap;
+  HandleMap handle_map_;
 };
 
 /// \ref JointCommandInterface for commanding effort-based joints

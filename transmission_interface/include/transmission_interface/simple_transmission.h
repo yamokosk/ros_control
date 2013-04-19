@@ -36,8 +36,6 @@
 
 #include <tinyxml.h>
 
-#include <hardware_interface/robot_hw.h>
-
 #include <transmission_interface/transmission.h>
 #include <transmission_interface/transmission_interface_exception.h>
 
@@ -181,6 +179,8 @@ public:
   std::size_t numJoints()    const {return 1;}
 
 private:
+  bool getResourceNameAndType(TiXmlElement const* config, std::string const& tagName, std::string& name, std::string& type);
+
   double reduction_;
   double jnt_offset_;
 };
@@ -204,35 +204,50 @@ inline SimpleTransmission::SimpleTransmission(const double reduction,
   }
 }
 
+bool SimpleTransmission::getResourceNameAndType(TiXmlElement const* config, std::string const& tagName, std::string& name, std::string& type)
+{
+  TiXmlElement const* jel = config->FirstChildElement(tagName);
+  if (jel->QueryValueAttribute("name", &name) != TIXML_SUCCESS)
+  {
+    std::cerr << "Missing name attribute in '" << tagName << "'. Aborting creation of transmission." << std::endl;
+    return false;
+  }
+
+  if (jel->QueryValueAttribute("hardwareInterface", &type) != TIXML_SUCCESS)
+  {
+    std::cerr << "Missing hardware interface for '" << name << "'. Assuming effort interface." << std::endl;
+  }
+
+  return true;
+}
+
 bool SimpleTransmission::initXml(TiXmlElement const* config, hardware_interface::RobotHW *robot)
 {
-  const char *name = elt->Attribute("name");
-  name_ = name ? name : "";
+  std::string name;
+  if (config->QueryValueAttribute("name", &name) != TIXML_SUCCESS)
+  {
+    std::cerr << "Missing name attribute in transmission. Aborting creation of transmission." << std::endl;
+    return false;
+  }
 
   // Load the joint
-  TiXmlElement *jel = elt->FirstChildElement("joint");
-  std::string jointName;
-  if (jel->QueryValueAttribute("name", &transmissionName) != TIXML_SUCCESS)
-  {
-    std::cerr << "SimpleTransmission did not specify joint name" << std::endl;
-    return false;
-  }
-  transmission_interface::JointData jointData = robot->addJoint(jointName)->getData();
+  std::string jointName, jointHardwareInterfaceType("EffortInterface");
+  if (!getResourceNameAndType(config, "joint", jointName, jointHardwareInterfaceType)) return false;
+
+  transmission_interface::JointData jointData;  
+  if (!wrapData(robot, jointHardwareInterfaceType, jointName, jointData)) return false;  
 
   // and actuator
-  TiXmlElement *ael = elt->FirstChildElement("actuator");
-  std::string actuatorData;
-  if (jel->QueryValueAttribute("name", &transmissionName) != TIXML_SUCCESS)
-  {
-    std::cerr << "SimpleTransmission did not specify an actuator name" << std::endl;
-    return false;
-  }
-  transmission_interface::ActuatorData actuatorData = robot->addActuator(actuatorName)->getData();
+  std::string actuatorName, actuatorHardwareInterfaceType("EffortInterface");
+  if (!getResourceNameAndType(config, "actuator", actuatorName, actuatorHardwareInterfaceType)) return false;
+
+  transmission_interface::ActuatorData actuatorData;  
+  if (!wrapData(robot, actuatorHardwareInterfaceType, actuatorName, actuatorData)) return false;
 
   // Parameters
-  reduction_ = atof(elt->FirstChildElement("mechanicalReduction")->GetText());
-  jnt_offset_ = atof(elt->FirstChildElement("jointOffset")->GetText());
-
+  reduction_ = config->FirstChildElement("mechanicalReduction") ? atof(config->FirstChildElement("mechanicalReduction")->GetText()) : reduction_;
+  jnt_offset_ = config->FirstChildElement("jointOffset") ? atof(config->FirstChildElement("jointOffset")->GetText()) : jnt_offset_;
+  
   // Register with parent class
   robot->registerTransmission(name, this, actuatorData, jointData);
 
