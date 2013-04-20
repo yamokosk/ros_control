@@ -150,7 +150,10 @@ public:
   virtual void registerTransmission(std::string const& name, 
         transmission_interface::Transmission* transmission, 
         transmission_interface::ActuatorData const& actuatorData, 
-        transmission_interface::JointData const& jointData) = 0;
+        transmission_interface::JointData const& jointData)
+  {
+	  throw std::runtime_error("registerTransmission() must be defined if to be used by child class");
+  }
   /*\}*/
 
 private:
