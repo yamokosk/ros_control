@@ -204,7 +204,7 @@ inline SimpleTransmission::SimpleTransmission(const double reduction,
   }
 }
 
-bool SimpleTransmission::getResourceNameAndType(TiXmlElement const* config, std::string const& tagName, std::string& name, std::string& type)
+inline bool SimpleTransmission::getResourceNameAndType(TiXmlElement const* config, std::string const& tagName, std::string& name, std::string& type)
 {
   TiXmlElement const* jel = config->FirstChildElement(tagName);
   if (jel->QueryValueAttribute("name", &name) != TIXML_SUCCESS)
@@ -221,7 +221,7 @@ bool SimpleTransmission::getResourceNameAndType(TiXmlElement const* config, std:
   return true;
 }
 
-bool SimpleTransmission::initXml(TiXmlElement const* config, hardware_interface::RobotHW *robot)
+inline bool SimpleTransmission::initXml(TiXmlElement const* config, hardware_interface::RobotHW *robot)
 {
   std::string name;
   if (config->QueryValueAttribute("name", &name) != TIXML_SUCCESS)
